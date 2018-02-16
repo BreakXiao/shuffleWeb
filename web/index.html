@@ -1,0 +1,188 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>发牌程序</title>
+<meta http-equiv="Content-Type" content="text/html; charset=gb2312" />
+
+<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+
+
+<script>
+/*
+	作者: DrawBreak
+	联系QQ: 799581228 
+	时间: 2017-5-03
+*/
+//nowcardn:当前已发的牌数量，用来确定牌的位置
+var nowcardn=0;
+var number=["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+var strchar=["魏","蜀","吴","群"];
+
+//发牌动画，参数为json和发牌数
+var movecard = function(json,dealnum)
+{ 
+	for(var i = 1;i <= dealnum-0; i++)
+	{
+		//h1是发出牌的类的标题元素，dealcard
+		var $h1=$('<div class="dcard"><div/>');
+		var j=json[i];
+		//将新建的元素h1增添到dealarea的子元素中
+		//该子元素通过寻找最后一个子元素last-child，在lastchild元素后新建该元素
+		$(".dealarea").children("div:last-child").after($h1);	
+		//此时h1成为最后一个元素
+
+		//js中使用除法要用Math.floor
+		var picstr = strchar[Math.floor((j-1)/13)] + number[(j-1)%13];
+		$(".dealarea").children("div:last-child").html(picstr);
+		
+		//css()设置图片，并进行位移
+		$(".dealarea").children("div:last-child").css({"background":"url(./images/"+j+".png)","background-size":"100% 100%"}).delay(120*i).animate
+		(
+			{marginTop:200+180*Math.floor(nowcardn/8)+"px",marginLeft:-130+130*(nowcardn%8) +"px"},100
+		);
+		
+		nowcardn++;		
+		var rnum=52-nowcardn;
+		$('#remaintext').delay(120*i).text(rnum);	
+	}
+} 
+
+$(document).ready(function()
+{ 
+	//网页初始化，先执行一次ajax操作，获取之前已经发的牌
+	$.ajax
+	({
+		type:"POST",
+		url:"http://10.225.254.127/remain_card",
+		success:function(data)
+		{
+			var json=$.parseJSON(data);
+			var rnum=json.remain_num;
+			$('#remaintext').text(rnum);
+			nowcardn=0;
+			movecard(json,52-rnum);
+		}
+	});
+	//发牌操作
+	$("#btn1").click(function()
+	{		
+	    var dealnum = $("#deal").val();
+		
+		//数据正确性判断
+		if( dealnum < 0 || dealnum >52)
+		{
+			alert("只有52张牌！发牌数应为0-52！");
+			return ;
+		}
+		else if(!(dealnum>=0&&dealnum<=52))
+		{
+			alert("请输入数字！范围为0-52");
+			return ;
+		}
+		
+		//产生一个随机数，和后端共同结合使用
+		var randnum = parseInt(Math.random() * (52) + 1);
+	 
+		//ajax获取数据库信息
+	    $.ajax
+		({
+			type:"POST",
+			url:"http://10.225.254.127/deal",
+			data:{dealn:dealnum,randseed:randnum},
+			//datatype默认为josn格式
+			success:function(data)
+			{						
+				var json = $.parseJSON(data);
+				if(json.shuffleflag == "Y")
+				{
+					nowcardn=0;
+					//清除所有card
+					$(".dcard").each(function()
+					{
+						$(this).animate
+						(
+							{marginTop:10+"px",marginLeft:200+"px"},300
+						);
+						//用remove清除时，要用obj对象而不是this。
+						var obj=$(this);	
+						setTimeout(function()
+							{
+								obj.remove();
+							},200
+						);
+						
+					});
+					movecard(json,dealnum);
+				}
+				else
+				{
+					//针对传回来的数组进行处理，记住，数组从1开始
+					//数字字符串-0  则变为数字
+					movecard(json,dealnum);
+				}
+			}										
+		});			
+	});		
+}) ;
+</script>
+
+<style>
+    body {
+        width: 100%;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+		background-image:url(./images/background2.jpg)
+    }
+	
+	.dealarea
+	{
+		width:1400px;
+		margin:10px 200px;
+	}
+	.dealarea:first-child
+	{
+		float:none;
+	}
+	.dcard,.back
+	{	
+		width:120px;
+		height:160px;
+		border-radius:0px;
+		border:0px solid #333;
+		margin: 10px 200px;
+		float:left;	
+		text-align:center;
+		line-height:160px;
+		position:absolute;
+		color:white;
+		font-family:"楷体","楷体_GB2312";
+		font-size:20px;
+	}	
+	.back{
+		background-image:url(./images/background.jpg);
+		background-size:100% 100%;
+		color:#00BFFF;
+		font-family:"楷体","楷体_GB2312";  	
+	}	
+	
+</style>
+
+
+<title>无标题文档</title>
+
+
+</head>
+
+<body>
+	<div class="dealarea">
+		<div class="back">
+		</div>
+	</div>
+	
+	<div id="div2">
+		<h3 id="remain">剩余数量</h3>
+		<h3 id="remaintext">text1</h3>
+		<p>发牌数量：<input type="text" id="deal" value="1"></p>
+		<button id="btn1" type="button">发牌</button>
+	</div>
+</body>
+</html>
