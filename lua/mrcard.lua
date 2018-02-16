@@ -4,6 +4,9 @@
 --请记得先配置文件间的依赖关系，并保证path路径能搜查到你所需要的模块。
 --card：是一个集合，指代剩余牌库
 --ddealcard：是一个列表，用来获取已发牌，用于网页的初始化
+package.path = '/usr/local/server/lualib/?.lua;'
+package.cpath = '/usr/local/server/lualib/?.so;'     
+
 mrcard = {}
 --连通redis数据库操作
 local function open_redis()
@@ -88,7 +91,7 @@ function mrcard.delecard(delcard)
     do
         red:srem("card",'0' + num)
 	--red:sadd("dealcard",num)
-	red:rpush("ddealcard",num)
+	red:lpush("ddealcard",num)
     end
     
     close_redis(red)

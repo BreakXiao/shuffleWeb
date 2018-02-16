@@ -1,6 +1,5 @@
 --剩余牌堆接口
-
-
+package.path = '/lsx/shuffleWeb/lua/?.lua;'
 mcard = require("mrcard") --调用redis和card的模块
 
 --local RemainCard = mcard.getrcard()

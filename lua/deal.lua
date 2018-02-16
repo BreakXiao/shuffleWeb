@@ -5,8 +5,10 @@
 
 
 --retTable:发送表，存储信息，转成json格式后发送给前端
-retTable={}
 
+package.path = '/lsx/shuffleWeb/lua/?.lua;'
+
+retTable={}
 --deal():发牌函数
 --参数为剩余牌堆 和 发牌数
 function deal(remain_card, num, randseed)
